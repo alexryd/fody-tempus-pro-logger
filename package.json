@@ -7,5 +7,13 @@
   "main": "index.js",
   "keywords": [
     "fody"
-  ]
+  ],
+  "dependencies": {
+    "noble": "^1.8.1"
+  },
+  "devDependencies": {
+    "command-line-commands": "^2.0.1",
+    "moment": "^2.18.1",
+    "prompt": "^1.0.0"
+  }
 }

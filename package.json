@@ -1,0 +1,11 @@
+{
+  "name": "fody-tempus-pro-logger",
+  "version": "0.0.1",
+  "description": "Logs data from the Fody Tempus Pro weather station",
+  "author": "Alexander Rydén",
+  "license": "ISC",
+  "main": "index.js",
+  "keywords": [
+    "fody"
+  ]
+}

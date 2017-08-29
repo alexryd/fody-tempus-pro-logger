@@ -3,13 +3,9 @@ const commandLineCommands = require('command-line-commands')
 const moment = require('moment')
 const noble = require('noble')
 const prompt = require('prompt')
+const WeatherStation = require('../src/weather-station')
 
 const SERVICE_UUID = 'fff0'
-
-const SETTINGS_WRITE_CHARACTERISTIC_UUID = 'fff1'
-const SETTINGS_NOTIFY_CHARACTERISTIC_UUID = 'fff2'
-const WRITE_CHARACTERISTIC_UUID = 'fff3'
-const NOTIFY_CHARACTERISTIC_UUID = 'fff4'
 
 const powerOn = () => {
   if (noble.state === 'poweredOn') {
@@ -134,147 +130,7 @@ const selectPeripheral = peripherals => {
   })
 }
 
-const connect = peripheral => {
-  if (peripheral.state === 'connected') {
-    return Promise.resolve(peripheral)
-  }
-
-  console.log(colors.gray('Connecting...'))
-
-  return new Promise((resolve, reject) => {
-    peripheral.connect(error => {
-      if (error) {
-        reject(error)
-        return
-      }
-
-      resolve(peripheral)
-    })
-  })
-}
-
-const discoverCharacteristics = peripheral => {
-  return new Promise((resolve, reject) => {
-    const disconnectHandler = () => {
-      reject(new Error('Peripheral disconnected unexpectedly'))
-    }
-    peripheral.once('disconnect', disconnectHandler)
-
-    peripheral.discoverSomeServicesAndCharacteristics([SERVICE_UUID], [], (error, services, characteristics) => {
-      peripheral.removeListener('disconnect', disconnectHandler)
-
-      if (error) {
-        reject(error)
-      } else {
-        resolve({ peripheral, characteristics })
-      }
-    })
-  })
-}
-
-class Device {
-  constructor(peripheral, characteristics) {
-    this.peripheral = peripheral
-    this.settingsWriteCharacteristic = characteristics.find(c => c.uuid === SETTINGS_WRITE_CHARACTERISTIC_UUID)
-    this.settingsNotifyCharacteristic = characteristics.find(c => c.uuid === SETTINGS_NOTIFY_CHARACTERISTIC_UUID)
-    this.writeCharacteristic = characteristics.find(c => c.uuid === WRITE_CHARACTERISTIC_UUID)
-    this.notifyCharacteristic = characteristics.find(c => c.uuid === NOTIFY_CHARACTERISTIC_UUID)
-  }
-
-  setupListeners() {
-    return new Promise((resolve, reject) => {
-      this.settingsNotifyCharacteristic.subscribe(error => {
-        if (error) {
-          reject(error)
-        } else {
-          this.notifyCharacteristic.subscribe(error2 => {
-            if (error) {
-              reject(error)
-            } else {
-              resolve()
-            }
-          })
-        }
-      })
-    })
-  }
-
-  writeSetting(data, responseCommand) {
-    return new Promise((resolve, reject) => {
-      const dataHandler = (receivedData, isNotification) => {
-        if (isNotification && receivedData.readUInt8(0) === responseCommand) {
-          this.settingsNotifyCharacteristic.removeListener('data', dataHandler)
-          resolve(receivedData)
-        }
-      }
-      this.settingsNotifyCharacteristic.on('data', dataHandler)
-
-      this.settingsWriteCharacteristic.write(data, false, error => {
-        if (error) {
-          this.settingsNotifyCharacteristic.removeListener('data', dataHandler)
-          reject(error)
-        }
-      })
-    })
-  }
-
-  write(data, responseCommand) {
-    return new Promise((resolve, reject) => {
-      const dataHandler = (receivedData, isNotification) => {
-        if (isNotification && receivedData.readUInt8(0) === responseCommand) {
-          this.notifyCharacteristic.removeListener('data', dataHandler)
-          resolve(receivedData)
-        }
-      }
-      this.notifyCharacteristic.on('data', dataHandler)
-
-      this.writeCharacteristic.write(data, false, error => {
-        if (error) {
-          this.notifyCharacteristic.removeListener('data', dataHandler)
-          reject(error)
-        }
-      })
-    })
-  }
-}
-
-const initialize = ({ peripheral, characteristics }) => {
-  return new Promise((resolve, reject) => {
-    const disconnectHandler = () => {
-      reject(new Error('Peripheral disconnected unexpectedly'))
-    }
-    peripheral.once('disconnect', disconnectHandler)
-
-    const device = new Device(peripheral, characteristics)
-
-    device.setupListeners()
-      // Not sure was this does...
-      .then(device.writeSetting(
-        Buffer.from([0x6, 0x6, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30]),
-        0x80
-      ))
-      // Not sure was this does...
-      .then(device.writeSetting(
-        Buffer.from([0x5, 0x6, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30]),
-        0x80
-      ))
-      // Not sure was this does...
-      .then(device.writeSetting(
-        Buffer.from([0xaa, 0x2, 0x33, 0xff]),
-        0x80
-      ))
-      .then(() => {
-        peripheral.removeListener('disconnect', disconnectHandler)
-        resolve(device)
-      })
-      .catch(error => {
-        peripheral.removeListener('disconnect', disconnectHandler)
-        reject(error)
-      })
-  })
-}
-
-const synchronizeTime = device => {
+const synchronizeTime = station => {
   console.log('Synchronizing time...')
 
   const data = Buffer.alloc(6)
@@ -282,7 +138,7 @@ const synchronizeTime = device => {
   data.writeUInt8(0xaa)
   data.write(dateString, 1, dateString.length, 'hex')
 
-  device.write(data, 0xfd)
+  station.write(data, 0xfd)
     .then(() => {
       console.log('Time successfully synchronized')
       process.exit()
@@ -293,10 +149,10 @@ const synchronizeTime = device => {
     })
 }
 
-const addSensors = device => {
+const addSensors = station => {
   console.log('Searching for sensors...')
 
-  device.write(Buffer.from([0xa3]), 0xde)
+  station.write(Buffer.from([0xa3]), 0xde)
     .then(responseData => {
       let numSensors = 0
       for (const n of responseData.slice(1, 4)) {
@@ -313,13 +169,13 @@ const addSensors = device => {
     })
 }
 
-const removeSensors = device => {
+const removeSensors = station => {
   console.log('Removing all sensors...')
 
-  device.write(Buffer.from([0xd0]), 0xde)
-    .then(device.write(Buffer.from([0xd1]), 0xde))
-    .then(device.write(Buffer.from([0xd2]), 0xde))
-    .then(device.write(Buffer.from([0xd3]), 0xde))
+  station.write(Buffer.from([0xd0]), 0xde)
+    .then(station.write(Buffer.from([0xd1]), 0xde))
+    .then(station.write(Buffer.from([0xd2]), 0xde))
+    .then(station.write(Buffer.from([0xd3]), 0xde))
     .then(() => {
       console.log('All sensors have been removed')
       process.exit()
@@ -330,10 +186,10 @@ const removeSensors = device => {
     })
 }
 
-const reset = device => {
+const reset = station => {
   console.log('Resetting...');
 
-  device.write(Buffer.from([0xc1]), null)
+  station.write(Buffer.from([0xc1]), null)
     .then(() => {
       console.log('Reset complete')
       process.exit()
@@ -358,21 +214,25 @@ if (command === null) {
   console.log('Valid commands are:', validCommands.join(', '))
   process.exit()
 } else {
+  let station = null
+
   powerOn()
     .then(scan)
     .then(selectPeripheral)
-    .then(connect)
-    .then(discoverCharacteristics)
-    .then(initialize)
-    .then(device => {
+    .then((peripheral) => {
+      station = new WeatherStation(peripheral)
+      console.log(colors.gray('Connecting...'))
+      return station.connect()
+    })
+    .then(() => {
       if (command === 'time-sync') {
-        synchronizeTime(device)
+        synchronizeTime(station)
       } else if (command === 'add-sensors') {
-        addSensors(device)
+        addSensors(station)
       } else if (command === 'remove-sensors') {
-        removeSensors(device)
+        removeSensors(station)
       } else if (command === 'reset') {
-        reset(device)
+        reset(station)
       }
     })
     .catch(error => {

@@ -1,4 +1,5 @@
 const EventEmitter = require('events')
+const noble = require('noble')
 
 const SERVICE_UUID = 'fff0'
 
@@ -8,9 +9,85 @@ const WRITE_CHARACTERISTIC_UUID = 'fff3'
 const NOTIFY_CHARACTERISTIC_UUID = 'fff4'
 
 class WeatherStation extends EventEmitter {
+  static powerOn() {
+    if (noble.state === 'poweredOn') {
+      return Promise.resolve()
+    }
+
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        noble.removeListener('stateChange', stateChangeHandler)
+        reject(new Error('Timeout while waiting for power on (state: ' + noble.state + ')'))
+      }, 5000)
+
+      const stateChangeHandler = state => {
+        if (state === 'poweredOn') {
+          clearTimeout(timeout)
+          noble.removeListener('stateChange', stateChangeHandler)
+          resolve()
+        }
+      }
+
+      noble.on('stateChange', stateChangeHandler)
+    })
+  }
+
+  static scan(discoverHandler) {
+    return WeatherStation.powerOn().then(() => {
+      return new Promise((resolve, reject) => {
+        const stations = []
+
+        const _discoverHandler = peripheral => {
+          const station = new WeatherStation(peripheral)
+          stations.push(station)
+
+          if (discoverHandler) {
+            discoverHandler.call(this, station)
+          }
+        }
+
+        const scanStopHandler = () => {
+          resolve(stations)
+        }
+
+        const stateChangeHandler = state => {
+          if (state !== 'poweredOn') {
+            noble.removeListener('discover', _discoverHandler)
+            noble.removeListener('scanStop', scanStopHandler)
+            noble.removeListener('stateChange', stateChangeHandler)
+            noble.stopScanning()
+            reject(new Error('State changed to ' + state))
+          }
+        }
+
+        noble.startScanning([SERVICE_UUID], false, error => {
+          if (error) {
+            reject(error)
+            return
+          }
+
+          noble.on('discover', _discoverHandler)
+          noble.on('scanStop', scanStopHandler)
+          noble.on('stateChange', stateChangeHandler)
+        })
+      })
+    })
+  }
+
+  static stopScan() {
+    return new Promise((resolve, reject) => {
+      noble.stopScanning(() => {
+        resolve()
+      })
+    })
+  }
+
   constructor(peripheral) {
     super()
     this.peripheral = peripheral
+    this.id = peripheral.id
+    this.address = peripheral.address
+    this.localName = peripheral.advertisement.localName
   }
 
   connect() {

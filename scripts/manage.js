@@ -1,122 +1,74 @@
 const colors = require('colors/safe')
 const commandLineCommands = require('command-line-commands')
 const moment = require('moment')
-const noble = require('noble')
 const prompt = require('prompt')
 const WeatherStation = require('../src/weather-station')
 
-const SERVICE_UUID = 'fff0'
-
-const powerOn = () => {
-  if (noble.state === 'poweredOn') {
-    return Promise.resolve()
-  }
-
-  console.log(colors.gray('Waiting for power on...'))
-
-  return new Promise((resolve, reject) => {
-    const stateChangeHandler = state => {
-      if (state === 'poweredOn') {
-        noble.removeListener('stateChange', stateChangeHandler)
-        resolve()
-      }
-    }
-
-    noble.on('stateChange', stateChangeHandler)
-  })
-}
-
 const scan = () => {
   console.log(colors.gray('Scanning...'))
+  console.log(colors.gray('Press Enter to stop scanning'))
 
-  return new Promise((resolve, reject) => {
-    const peripherals = []
+  const stdin = process.stdin
+  const stdinHandler = char => {
+    if (char === '\u0003') {  // Ctrl+C
+      process.exit()
+    } else if (char === '\u000d') { // Enter
+      stdin.setRawMode(false)
+      stdin.removeListener('data', stdinHandler)
 
-    const discoverHandler = peripheral => {
-      if (peripherals.length === 0) {
-        console.log('')
-        console.log('Found peripherals:')
-      }
+      WeatherStation.stopScan()
+    } else {
+      process.stdout.write(char)
+    }
+  }
 
-      peripherals.push(peripheral)
+  stdin.setRawMode(true)
+  stdin.resume()
+  stdin.setEncoding('utf-8')
+  stdin.on('data', stdinHandler)
 
-      const message = [
-        colors.green(peripherals.length),
-        ': ',
-        peripheral.advertisement.localName,
-        ' (',
-        peripheral.address,
-        ')'
-      ]
-      console.log(message.join(''))
+  let numStations = 0
+
+  const discoverHandler = station => {
+    if (numStations === 0) {
+      console.log('')
+      console.log('Found weather stations:')
     }
 
-    const stateChangeHandler = state => {
-      if (state !== 'poweredOn') {
-        noble.removeListener('discover', discoverHandler)
-        noble.removeListener('stateChange', stateChangeHandler)
-        noble.stopScanning()
-        reject(new Error('State changed to ' + state))
-      }
-    }
+    const message = [
+      colors.green(++numStations),
+      ': ',
+      station.localName,
+      ' (',
+      station.address,
+      ')'
+    ]
+    console.log(message.join(''))
+  }
 
-    noble.startScanning([SERVICE_UUID], false, error => {
-      if (error) {
-        reject(error)
-        return
-      }
-
-      const stdin = process.stdin
-      const stdinHandler = char => {
-        if (char === '\u0003') {  // Ctrl+C
-          process.exit()
-        } else if (char === '\u000d') { // Enter
-          stdin.setRawMode(false)
-          stdin.removeListener('data', stdinHandler)
-
-          noble.removeListener('discover', discoverHandler)
-          noble.removeListener('stateChange', stateChangeHandler)
-          noble.stopScanning()
-
-          resolve(peripherals)
-        } else {
-          process.stdout.write(char)
-        }
-      }
-
-      stdin.setRawMode(true)
-      stdin.resume()
-      stdin.setEncoding('utf-8')
-      stdin.on('data', stdinHandler)
-
-      noble.on('discover', discoverHandler)
-      noble.on('stateChange', stateChangeHandler)
-
-      console.log(colors.gray('Press Enter to stop scanning'))
-    })
-  })
+  return WeatherStation.scan(discoverHandler)
 }
 
-const selectPeripheral = peripherals => {
+const selectStation = stations => {
   return new Promise((resolve, reject) => {
-    if (peripherals.length === 1) {
+    if (stations.length === 1) {
       console.log('')
-      resolve(peripherals[0])
-    } else if (peripherals.length > 1) {
+      resolve(stations[0])
+    } else if (stations.length > 1) {
       console.log('')
       prompt.start()
       prompt.message = ''
       prompt.get(
         [{
-          name: 'peripheral',
-          description: colors.green('Select a peripheral (1-' + peripherals.length + ')'),
+          name: 'station',
+          description: colors.green('Select a weather station (1-' + stations.length + ')'),
           type: 'number',
         }],
         (err, result) => {
           if (!err) {
-            const num = result.peripheral
-            if (num >= 1 && num <= peripherals.length) {
-              resolve(peripherals[num - 1])
+            const num = result.station
+            if (num >= 1 && num <= stations.length) {
+              resolve(stations[num - 1])
             } else {
               console.error(colors.red('Invalid number:'), num)
               process.exit(1)
@@ -216,11 +168,10 @@ if (command === null) {
 } else {
   let station = null
 
-  powerOn()
-    .then(scan)
-    .then(selectPeripheral)
-    .then((peripheral) => {
-      station = new WeatherStation(peripheral)
+  scan()
+    .then(selectStation)
+    .then((s) => {
+      station = s
       console.log(colors.gray('Connecting...'))
       return station.connect()
     })

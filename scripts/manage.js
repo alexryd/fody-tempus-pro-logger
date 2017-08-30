@@ -4,6 +4,20 @@ const moment = require('moment')
 const prompt = require('prompt')
 const WeatherStation = require('../src/weather-station')
 
+const listen = () => {
+  console.log('Listening for readings...')
+
+  const readingHandler = reading => {
+    console.log(reading.sensor, reading.type, reading.value);
+  }
+
+  WeatherStation.scanForReadings(readingHandler)
+    .catch(error => {
+      console.error(colors.red('An error occurred:'), error)
+      process.exit(1)
+    })
+}
+
 const scan = () => {
   console.log(colors.gray('Scanning...'))
   console.log(colors.gray('Press Enter to stop scanning'))
@@ -153,6 +167,7 @@ const reset = station => {
 }
 
 const validCommands = [
+  'listen',
   'time-sync',
   'add-sensors',
   'remove-sensors',
@@ -165,6 +180,8 @@ if (command === null) {
   console.log('')
   console.log('Valid commands are:', validCommands.join(', '))
   process.exit()
+} else if (command === 'listen') {
+  listen()
 } else {
   let station = null
 

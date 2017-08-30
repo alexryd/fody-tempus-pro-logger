@@ -1,5 +1,6 @@
 const EventEmitter = require('events')
 const noble = require('noble')
+const Reading = require('./reading')
 
 const SERVICE_UUID = 'fff0'
 
@@ -67,6 +68,50 @@ class WeatherStation extends EventEmitter {
           }
 
           noble.on('discover', _discoverHandler)
+          noble.on('scanStop', scanStopHandler)
+          noble.on('stateChange', stateChangeHandler)
+        })
+      })
+    })
+  }
+
+  static scanForReadings(readingHandler) {
+    return WeatherStation.powerOn().then(() => {
+      return new Promise((resolve, reject) => {
+        const discoverHandler = peripheral => {
+          if (peripheral.advertisement.localName !== 'S-Power') {
+            return
+          }
+
+          if (readingHandler) {
+            const data = peripheral.advertisement.manufacturerData
+            for (const reading of Reading.parseReadings(data)) {
+              readingHandler.call(this, reading, peripheral)
+            }
+          }
+        }
+
+        const scanStopHandler = () => {
+          resolve()
+        }
+
+        const stateChangeHandler = state => {
+          if (state !== 'poweredOn') {
+            noble.removeListener('discover', discoverHandler)
+            noble.removeListener('scanStop', scanStopHandler)
+            noble.removeListener('stateChange', stateChangeHandler)
+            noble.stopScanning()
+            reject(new Error('State changed to ' + state))
+          }
+        }
+
+        noble.startScanning([SERVICE_UUID], true, error => {
+          if (error) {
+            reject(error)
+            return
+          }
+
+          noble.on('discover', discoverHandler)
           noble.on('scanStop', scanStopHandler)
           noble.on('stateChange', stateChangeHandler)
         })

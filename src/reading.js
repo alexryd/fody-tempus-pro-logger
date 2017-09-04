@@ -44,7 +44,7 @@ class Reading {
     case 0xa2:
       readings.push(new Reading(
         'indoor',
-        'barometricPressure',
+        'barometric-pressure',
         parseBarometricPressure(data, 2)
       ))
       break
@@ -65,17 +65,17 @@ class Reading {
     case 0xb2:
       readings.push(new Reading(
         'outdoor',
-        'windDirection',
+        'wind-direction',
         parseWindDirection(data, 1)
       ))
       readings.push(new Reading(
         'outdoor',
-        'averageWindSpeed',
+        'average-wind-speed',
         parseWindSpeed(data, 2)
       ))
       readings.push(new Reading(
         'outdoor',
-        'windGustSpeed',
+        'wind-gust-speed',
         parseWindSpeed(data, 5)
       ))
       break

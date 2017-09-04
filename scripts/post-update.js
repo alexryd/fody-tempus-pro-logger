@@ -5,6 +5,18 @@ const commandLineArgs = require('command-line-args')
 const M2X = require('../src/m2x')
 const WeatherStation = require('../src/weather-station')
 
+const SENSORS = [
+  'indoor-temperature',
+  'indoor-humidity',
+  'indoor-barometric-pressure',
+  'outdoor-temperature',
+  'outdoor-humidity',
+  'outdoor-wind-direction',
+  'outdoor-average-wind-speed',
+  'outdoor-wind-gust-speed',
+  'outdoor-rainfall',
+]
+
 const args = commandLineArgs([
   { name: 'addresses', type: String, multiple: true },
   { name: 'api-key', alias: 'k', type: String },
@@ -33,29 +45,57 @@ const sensor = args['sensor']
 if (!sensor) {
   console.error(colors.red('A sensor must be specified'))
   process.exit(1)
+} else if (sensor !== 'all' && SENSORS.indexOf(sensor) === -1) {
+  console.error(colors.red('Invalid sensor: ' + sensor))
+  console.log('Valid values are:', SENSORS.concat(['all']).join(', '))
+  process.exit(1)
+}
+
+const receivedReadings = new Map()
+
+const postValues = values => {
+  console.log(colors.gray('Posting update...'))
+
+  const m2x = new M2X(apiKey, deviceId)
+
+  m2x.postUpdate(values)
+    .then(() => {
+      console.log('Update posted')
+      process.exit()
+    })
+    .catch(response => {
+      console.error(colors.red('An error occurred:'), response)
+      process.exit(1)
+    })
 }
 
 const readingHandler = reading => {
-  if (reading.sensor + '-' + reading.type === sensor) {
+  const name = reading.sensor + '-' + reading.type
+
+  if (sensor === 'all' && SENSORS.indexOf(name) !== -1) {
+    console.log(colors.gray('Received a ' + name + ' reading of ' + reading.value))
+
+    receivedReadings.set(name, reading.value)
+
+    if (receivedReadings.size >= SENSORS.length) {
+      WeatherStation.stopScan()
+
+      const values = {}
+      for (const [n, v] of receivedReadings) {
+        values[n] = v
+      }
+
+      postValues(values)
+    }
+  } else if (name === sensor) {
+    console.log(colors.gray('Received a reading of ' + reading.value))
+
     WeatherStation.stopScan()
 
-    console.log(colors.gray('Received a reading of ' + reading.value))
-    console.log(colors.gray('Posting update...'))
-
-    const m2x = new M2X(apiKey, deviceId)
-
     const values = {}
-    values[sensor] = reading.value
+    values[name] = reading.value
 
-    m2x.postUpdate(values)
-      .then(() => {
-        console.log('Update posted')
-        process.exit()
-      })
-      .catch(response => {
-        console.error(colors.red('An error occurred:'), response)
-        process.exit(1)
-      })
+    postValues(values)
   }
 }
 

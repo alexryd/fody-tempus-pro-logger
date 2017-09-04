@@ -37,6 +37,8 @@ if (!sensor) {
 
 const readingHandler = reading => {
   if (reading.sensor + '-' + reading.type === sensor) {
+    WeatherStation.stopScan()
+
     console.log(colors.gray('Received a reading of ' + reading.value))
     console.log(colors.gray('Posting update...'))
 

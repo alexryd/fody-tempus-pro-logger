@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const colors = require('colors/safe')
 const commandLineCommands = require('command-line-commands')
 const moment = require('moment')

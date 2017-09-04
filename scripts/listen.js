@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const commandLineArgs = require('command-line-args')
 const WeatherStation = require('../src/weather-station')
 

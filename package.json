@@ -13,6 +13,7 @@
     "fody"
   ],
   "dependencies": {
+    "m2x": "^4.3.0",
     "noble": "^1.8.1"
   },
   "devDependencies": {

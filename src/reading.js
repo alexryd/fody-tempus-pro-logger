@@ -27,17 +27,17 @@ class Reading {
   static parseReadings(data) {
     const readings = []
 
-    switch (data.readUInt8(8)) {
+    switch (data.readUInt8(0)) {
     case 0xe0:
       readings.push(new Reading(
         'indoor',
         'temperature',
-        parseTemperature(data, 9)
+        parseTemperature(data, 1)
       ))
       readings.push(new Reading(
         'indoor',
         'humidity',
-        parseHumidity(data, 16)
+        parseHumidity(data, 8)
       ))
       break
 
@@ -45,7 +45,7 @@ class Reading {
       readings.push(new Reading(
         'indoor',
         'barometricPressure',
-        parseBarometricPressure(data, 10)
+        parseBarometricPressure(data, 2)
       ))
       break
 
@@ -53,12 +53,12 @@ class Reading {
       readings.push(new Reading(
         'outdoor',
         'temperature',
-        parseTemperature(data, 9)
+        parseTemperature(data, 1)
       ))
       readings.push(new Reading(
         'outdoor',
         'humidity',
-        parseHumidity(data, 16)
+        parseHumidity(data, 8)
       ))
       break
 
@@ -66,17 +66,17 @@ class Reading {
       readings.push(new Reading(
         'outdoor',
         'windDirection',
-        parseWindDirection(data, 9)
+        parseWindDirection(data, 1)
       ))
       readings.push(new Reading(
         'outdoor',
         'averageWindSpeed',
-        parseWindSpeed(data, 10)
+        parseWindSpeed(data, 2)
       ))
       readings.push(new Reading(
         'outdoor',
         'windGustSpeed',
-        parseWindSpeed(data, 13)
+        parseWindSpeed(data, 5)
       ))
       break
 
@@ -84,7 +84,7 @@ class Reading {
       readings.push(new Reading(
         'outdoor',
         'rainfall',
-        parseRainfall(data, 9)
+        parseRainfall(data, 1)
       ))
       break
 

@@ -2,6 +2,8 @@ const EventEmitter = require('events')
 const noble = require('noble')
 const Reading = require('./reading')
 
+const COMPANY_ID = 0x4842
+
 const SERVICE_UUID = 'fff0'
 
 const SETTINGS_WRITE_CHARACTERISTIC_UUID = 'fff1'
@@ -79,13 +81,20 @@ class WeatherStation extends EventEmitter {
     return WeatherStation.powerOn().then(() => {
       return new Promise((resolve, reject) => {
         const discoverHandler = peripheral => {
-          if (peripheral.advertisement.localName !== 'S-Power') {
+          const data = peripheral.advertisement.manufacturerData
+          if (data.length < 9 || data.readUInt16LE(0) !== COMPANY_ID) {
+            return
+          }
+
+          const address = peripheral.address && peripheral.address.replace(/:/g, '')
+          if (address && data.readUIntLE(2, 6).toString(16) !== address) {
+            // Seems like the advertisement data always starts with the address
+            // in little endian, so we use that as an additional check here
             return
           }
 
           if (readingHandler) {
-            const data = peripheral.advertisement.manufacturerData
-            for (const reading of Reading.parseReadings(data)) {
+            for (const reading of Reading.parseReadings(data.slice(8))) {
               readingHandler.call(this, reading, peripheral)
             }
           }

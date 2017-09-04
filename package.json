@@ -4,6 +4,10 @@
   "description": "Logs data from the Fody Tempus Pro weather station",
   "author": "Alexander Rydén",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/alexryd/fody-tempus-pro-logger"
+  },
   "main": "index.js",
   "keywords": [
     "fody"

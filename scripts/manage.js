@@ -153,7 +153,7 @@ const reset = station => {
 }
 
 const validCommands = [
-  'time-sync',
+  'sync-time',
   'add-sensors',
   'remove-sensors',
   'reset'
@@ -176,7 +176,7 @@ if (command === null) {
       return station.connect()
     })
     .then(() => {
-      if (command === 'time-sync') {
+      if (command === 'sync-time') {
         synchronizeTime(station)
       } else if (command === 'add-sensors') {
         addSensors(station)

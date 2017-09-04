@@ -73,7 +73,7 @@ const readingHandler = reading => {
   const name = reading.sensor + '-' + reading.type
 
   if (sensor === 'all' && SENSORS.indexOf(name) !== -1) {
-    console.log(colors.gray('Received a ' + name + ' reading of ' + reading.value))
+    console.log(colors.gray(name + ': ' + reading.value))
 
     receivedReadings.set(name, reading.value)
 

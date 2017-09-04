@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const colors = require('colors/safe')
 const commandLineArgs = require('command-line-args')
 const WeatherStation = require('../src/weather-station')
 

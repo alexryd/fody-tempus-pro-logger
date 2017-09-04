@@ -88,6 +88,11 @@ class Reading {
       ))
       break
 
+    case 0xa5:
+      // These messages seem to indicate that the time needs to be synchronized.
+      // We will ignore them here.
+      break
+
     default:
       console.log('Unknown reading:', data)
     }

@@ -35,12 +35,17 @@ class WeatherStation extends EventEmitter {
     })
   }
 
-  static scan(discoverHandler) {
+  static scan(discoverHandler, addresses) {
     return WeatherStation.powerOn().then(() => {
       return new Promise((resolve, reject) => {
         const stations = []
 
         const _discoverHandler = peripheral => {
+          const address = peripheral.address && peripheral.address.replace(/:/g, '')
+          if (addresses && addresses.indexOf(address) === -1) {
+            return
+          }
+
           const station = new WeatherStation(peripheral)
           stations.push(station)
 
@@ -77,7 +82,7 @@ class WeatherStation extends EventEmitter {
     })
   }
 
-  static scanForReadings(readingHandler) {
+  static scanForReadings(readingHandler, addresses) {
     return WeatherStation.powerOn().then(() => {
       return new Promise((resolve, reject) => {
         const discoverHandler = peripheral => {
@@ -90,6 +95,10 @@ class WeatherStation extends EventEmitter {
           if (address && data.readUIntLE(2, 6).toString(16) !== address) {
             // Seems like the advertisement data always starts with the address
             // in little endian, so we use that as an additional check here
+            return
+          }
+
+          if (addresses && addresses.indexOf(address) === -1) {
             return
           }
 

@@ -53,6 +53,10 @@ if (!sensor) {
 
 const receivedReadings = new Map()
 
+const timeout = setTimeout(() => {
+  WeatherStation.stopScan()
+}, 10000)
+
 const postValues = values => {
   console.log(colors.gray('Posting update...'))
 
@@ -78,30 +82,35 @@ const readingHandler = reading => {
     receivedReadings.set(name, reading.value)
 
     if (receivedReadings.size >= SENSORS.length) {
+      clearTimeout(timeout)
       WeatherStation.stopScan()
-
-      const values = {}
-      for (const [n, v] of receivedReadings) {
-        values[n] = v
-      }
-
-      postValues(values)
     }
   } else if (name === sensor) {
     console.log(colors.gray('Received a reading of ' + reading.value))
 
+    receivedReadings.set(name, reading.value)
+
+    clearTimeout(timeout)
     WeatherStation.stopScan()
-
-    const values = {}
-    values[name] = reading.value
-
-    postValues(values)
   }
 }
 
 console.log(colors.gray('Listening for ' + sensor + ' readings...'))
 
 WeatherStation.scanForReadings(readingHandler, normAddresses)
+  .then(() => {
+    if (receivedReadings.size > 0) {
+      const values = {}
+      for (const [n, v] of receivedReadings) {
+        values[n] = v
+      }
+
+      postValues(values)
+    } else {
+      console.error(colors.gray('Nothing to post'))
+      process.exit()
+    }
+  })
   .catch(error => {
     console.error(colors.red('An error occurred:'), error)
     process.exit(1)

@@ -299,6 +299,41 @@ class Reading {
     this.type = type
     this.value = value
   }
+
+  get symbol() {
+    switch (this.type) {
+    case 'temperature':
+    case 'maximum-temperature':
+    case 'minimum-temperature':
+      return '°C'
+
+    case 'humidity':
+    case 'maximum-humidity':
+    case 'minimum-humidity':
+      return '%'
+
+    case 'barometric-pressure':
+      return 'mbar'
+
+    case 'wind-direction':
+      return '°'
+
+    case 'wind-speed':
+    case 'maximum-wind-speed':
+    case 'gust-speed':
+    case 'maximum-gust-speed':
+      return 'm/s'
+
+    case 'hourly-rainfall':
+    case 'daily-rainfall':
+    case 'weekly-rainfall':
+    case 'monthly-rainfall':
+    case 'yearly-rainfall':
+      return 'mm'
+    }
+
+    return null
+  }
 }
 
 module.exports = Reading

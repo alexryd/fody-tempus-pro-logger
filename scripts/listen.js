@@ -15,7 +15,21 @@ if (help) {
 }
 
 const readingHandler = reading => {
-  console.log(reading.sensor, reading.type, reading.value);
+  const msg = [
+    reading.sensor,
+    '-',
+    reading.type,
+    ': ',
+    colors.green(reading.value),
+  ]
+
+  const symbol = reading.symbol
+  if (symbol) {
+    msg.push(' ')
+    msg.push(colors.green(symbol))
+  }
+
+  console.log(msg.join(''))
 }
 
 const normAddresses = addresses && addresses.map(

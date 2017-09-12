@@ -22,6 +22,7 @@ const args = commandLineArgs([
   { name: 'api-key', alias: 'k', type: String },
   { name: 'device-id', alias: 'd', type: String },
   { name: 'sensor', alias: 's', type: String, defaultOption: true },
+  { name: 'timeout', alias: 't', type: Number, defaultValue: 10000 },
 ])
 
 const addresses = args['addresses']
@@ -55,7 +56,7 @@ const receivedReadings = new Map()
 
 const timeout = setTimeout(() => {
   WeatherStation.stopScan()
-}, 10000)
+}, args.timeout)
 
 const postValues = values => {
   console.log(colors.gray('Posting update...'))

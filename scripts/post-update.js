@@ -12,9 +12,9 @@ const SENSORS = [
   'outdoor-temperature',
   'outdoor-humidity',
   'outdoor-wind-direction',
-  'outdoor-average-wind-speed',
-  'outdoor-wind-gust-speed',
-  'outdoor-rainfall',
+  'outdoor-wind-speed',
+  'outdoor-gust-speed',
+  'outdoor-hourly-rainfall',
 ]
 
 const args = commandLineArgs([

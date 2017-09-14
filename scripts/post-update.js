@@ -55,6 +55,7 @@ if (!sensor) {
 const receivedReadings = new Map()
 
 const timeout = setTimeout(() => {
+  console.log(colors.red('Timed out while listening for sensor readings'))
   WeatherStation.stopScan()
 }, args.timeout)
 

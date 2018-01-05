@@ -15,7 +15,8 @@
   "dependencies": {
     "m2x": "^4.3.0",
     "nconf": "^0.10.0",
-    "noble": "^1.8.1"
+    "noble": "^1.8.1",
+    "node-cron": "^1.2.1"
   },
   "devDependencies": {
     "command-line-args": "^4.0.7",

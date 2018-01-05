@@ -1,6 +1,7 @@
 const nconf = require('nconf')
 
 const DEFAULTS = {
+  schedule: '*/15 * * * *',
 }
 
 class Config {

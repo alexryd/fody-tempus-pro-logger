@@ -1,4 +1,5 @@
 const nconf = require('nconf')
+const path = require('path')
 
 const DEFAULTS = {
   schedule: '*/15 * * * *',
@@ -29,7 +30,7 @@ class Config {
   constructor() {
     nconf.argv()
       .env()
-      .file({ file: 'config.json' })
+      .file({ file: path.join(__dirname, '..', 'config.json') })
       .defaults(DEFAULTS)
   }
 

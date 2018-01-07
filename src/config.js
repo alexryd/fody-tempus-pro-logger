@@ -2,6 +2,27 @@ const nconf = require('nconf')
 
 const DEFAULTS = {
   schedule: '*/15 * * * *',
+
+  sensor: {
+    addresses: [],
+    readings: [
+      'indoor-barometric-pressure',
+      'indoor-humidity',
+      'indoor-temperature',
+      'outdoor-gust-speed',
+      'outdoor-hourly-rainfall',
+      'outdoor-humidity',
+      'outdoor-temperature',
+      'outdoor-wind-direction',
+      'outdoor-wind-speed',
+    ],
+    readTimeout: 10000,
+  },
+
+  m2x: {
+    apiKey: '',
+    deviceId: '',
+  }
 }
 
 class Config {

@@ -3,6 +3,7 @@
 const colors = require('colors/safe')
 const config = require('./src/config')
 const cron = require('node-cron')
+const uploader = require('./src/uploader')
 
 const schedule = config.get('schedule')
 
@@ -12,5 +13,13 @@ if (!cron.validate(schedule)) {
 }
 
 cron.schedule(schedule, () => {
-  // fetch sensor readings and post them to M2X
+  uploader.scanAndUpload()
+    .then(readings => {
+      console.log('Uploaded ' + colors.green(readings.size) + ' sensor readings')
+    })
+    .catch(error => {
+      console.error(colors.red('An error occurred:'), error)
+    })
 })
+
+console.log('Fody Tempus Pro logger started')

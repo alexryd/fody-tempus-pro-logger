@@ -14,8 +14,8 @@ if (!cron.validate(schedule)) {
 
 cron.schedule(schedule, () => {
   uploader.scanAndUpload()
-    .then(readings => {
-      console.log('Uploaded ' + colors.green(readings.size) + ' sensor readings')
+    .then(record => {
+      console.log('Uploaded ' + colors.green(record.size) + ' sensor readings')
     })
     .catch(error => {
       console.error(colors.red('An error occurred:'), error)

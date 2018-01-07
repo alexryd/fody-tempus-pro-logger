@@ -1,6 +1,7 @@
 const colors = require('colors/safe')
 const config = require('./config')
 const M2X = require('./m2x')
+const Record = require('./record')
 const WeatherStation = require('./weather-station')
 
 class Uploader {
@@ -15,16 +16,14 @@ class Uploader {
         WeatherStation.stopScan()
       }, config.get('sensor:readTimeout'))
 
-      const receivedReadings = new Map()
+      const record = new Record()
       const includedReadings = config.get('sensor:readings')
 
       const readingHandler = reading => {
-        const name = reading.sensor + '-' + reading.type
+        if (includedReadings.indexOf(reading.name) !== -1) {
+          record.add(reading)
 
-        if (includedReadings.indexOf(name) !== -1) {
-          receivedReadings.set(name, reading.value)
-
-          if (receivedReadings.size >= includedReadings.length) {
+          if (record.size >= includedReadings.length) {
             clearTimeout(timeout)
             WeatherStation.stopScan()
           }
@@ -34,7 +33,7 @@ class Uploader {
       WeatherStation.scanForReadings(readingHandler, this.addresses)
         .then(() => {
           clearTimeout(timeout)
-          resolve(receivedReadings)
+          resolve(record)
         })
         .catch(error => {
           clearTimeout(timeout)
@@ -43,7 +42,7 @@ class Uploader {
     })
   }
 
-  upload(readings) {
+  upload(record) {
     return new Promise((resolve, reject) => {
       const m2x = new M2X(
         config.get('m2x:apiKey'),
@@ -51,13 +50,13 @@ class Uploader {
       )
 
       const values = {}
-      for (const [n, v] of readings) {
-        values[n] = v
+      for (const [n, r] of record) {
+        values[n] = r.value
       }
 
       m2x.postUpdate(values)
         .then(() => {
-          resolve(readings)
+          resolve(record)
         })
         .catch(response => {
           reject(response)

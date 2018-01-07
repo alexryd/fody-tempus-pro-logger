@@ -334,6 +334,10 @@ class Reading {
 
     return null
   }
+
+  get name() {
+    return this.sensor + '-' + this.type
+  }
 }
 
 module.exports = Reading

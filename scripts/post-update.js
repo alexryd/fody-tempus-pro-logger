@@ -6,8 +6,8 @@ const uploader = require('../src/uploader')
 console.log(colors.gray('Scanning for readings...'))
 
 uploader.scanAndUpload()
-  .then(record => {
-    console.log('Uploaded ' + colors.green(record.size) + ' sensor readings')
+  .then(() => {
+    console.log('Sensor readings uploaded')
     process.exit()
   })
   .catch(error => {

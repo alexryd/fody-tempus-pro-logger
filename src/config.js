@@ -20,6 +20,10 @@ const DEFAULTS = {
     readTimeout: 10000,
   },
 
+  db: {
+    path: path.join(__dirname, '..', 'data.db'),
+  },
+
   m2x: {
     apiKey: '',
     deviceId: '',

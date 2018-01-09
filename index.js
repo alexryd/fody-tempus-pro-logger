@@ -4,6 +4,7 @@ const colors = require('colors/safe')
 const config = require('./src/config')
 const cron = require('node-cron')
 const uploader = require('./src/uploader')
+const WeatherStation = require('./src/weather-station')
 
 const schedule = config.get('schedule')
 
@@ -13,7 +14,11 @@ if (!cron.validate(schedule)) {
 }
 
 cron.schedule(schedule, () => {
-  uploader.scanAndUpload()
+  WeatherStation.getRecord()
+    .then(record => {
+      console.log('Found', colors.green(record.size), 'sensor readings')
+      return uploader.upload(record)
+    })
     .then(() => {
       console.log('Sensor readings uploaded')
     })

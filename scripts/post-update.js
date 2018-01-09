@@ -2,10 +2,15 @@
 
 const colors = require('colors/safe')
 const uploader = require('../src/uploader')
+const WeatherStation = require('../src/weather-station')
 
 console.log(colors.gray('Scanning for readings...'))
 
-uploader.scanAndUpload()
+WeatherStation.getRecord()
+  .then(record => {
+    console.log('Found', colors.green(record.size), 'sensor readings')
+    return uploader.upload(record, false, false)
+  })
   .then(() => {
     console.log('Sensor readings uploaded')
     process.exit()

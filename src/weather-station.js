@@ -1,6 +1,9 @@
+const colors = require('colors/safe')
+const config = require('./config')
 const EventEmitter = require('events')
 const noble = require('noble')
 const Reading = require('./reading')
+const Record = require('./record')
 
 const COMPANY_ID = 0x4842
 
@@ -10,6 +13,13 @@ const SETTINGS_WRITE_CHARACTERISTIC_UUID = 'fff1'
 const SETTINGS_NOTIFY_CHARACTERISTIC_UUID = 'fff2'
 const WRITE_CHARACTERISTIC_UUID = 'fff3'
 const NOTIFY_CHARACTERISTIC_UUID = 'fff4'
+
+const getNormalizedAddresses = () => {
+  const addresses = config.get('sensor:addresses')
+  return addresses && addresses.map(
+    address => address.toLowerCase().replace(/:/g, '')
+  )
+}
 
 class WeatherStation extends EventEmitter {
   static powerOn() {
@@ -142,6 +152,39 @@ class WeatherStation extends EventEmitter {
       noble.stopScanning(() => {
         resolve()
       })
+    })
+  }
+
+  static getRecord() {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        console.log(colors.red('Timed out while listening for sensor readings'))
+        WeatherStation.stopScan()
+      }, config.get('sensor:readTimeout'))
+
+      const record = new Record()
+      const includedReadings = config.get('sensor:readings')
+
+      const readingHandler = reading => {
+        if (includedReadings.indexOf(reading.name) !== -1) {
+          record.add(reading)
+
+          if (record.size >= includedReadings.length) {
+            clearTimeout(timeout)
+            WeatherStation.stopScan()
+          }
+        }
+      }
+
+      WeatherStation.scanForReadings(readingHandler, getNormalizedAddresses())
+        .then(() => {
+          clearTimeout(timeout)
+          resolve(record)
+        })
+        .catch(error => {
+          clearTimeout(timeout)
+          reject(error)
+        })
     })
   }
 

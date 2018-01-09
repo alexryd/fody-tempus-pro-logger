@@ -14,6 +14,8 @@ if (!cron.validate(schedule)) {
 }
 
 cron.schedule(schedule, () => {
+  console.log(colors.gray('Scanning for readings...'))
+
   WeatherStation.getRecord()
     .then(record => {
       console.log('Found', colors.green(record.size), 'sensor readings')

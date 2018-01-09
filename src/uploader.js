@@ -1,3 +1,4 @@
+const colors = require('colors/safe')
 const DB = require('./db')
 const m2x = require('./m2x')
 
@@ -20,6 +21,10 @@ class Uploader {
         }
       })
       .then(pendingRecords => {
+        if (pendingRecords.length > 0) {
+          console.log('Including', colors.blue(pendingRecords.length), 'stored record(s)')
+        }
+
         const values = {}
         for (const r of pendingRecords) {
           this._appendRow(values, r)
@@ -88,6 +93,7 @@ class Uploader {
         .catch(error => {
           db.storeRecord(record)
             .then(() => {
+              console.log('Upload failed. Record stored in database.')
               reject(error)
             })
             .catch(reject)

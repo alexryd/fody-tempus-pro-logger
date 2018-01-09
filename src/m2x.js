@@ -13,7 +13,10 @@ class M2XWrapper {
         if (response.status === 202) {
           resolve()
         } else {
-          reject(response)
+          const error = new Error('Failed to post updates to M2X')
+          error.status = response.status
+          error.error = response.error()
+          reject(error)
         }
       })
     })

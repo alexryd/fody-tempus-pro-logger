@@ -19,7 +19,10 @@ cron.schedule(schedule, () => {
   WeatherStation.getRecord()
     .then(record => {
       console.log('Found', colors.green(record.size), 'sensor readings')
-      return uploader.upload(record)
+
+      if (record.size > 0) {
+        return uploader.upload(record)
+      }
     })
     .then(() => {
       console.log('Sensor readings uploaded')

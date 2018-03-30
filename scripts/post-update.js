@@ -9,6 +9,12 @@ console.log(colors.gray('Scanning for readings...'))
 WeatherStation.getRecord()
   .then(record => {
     console.log('Found', colors.green(record.size), 'sensor readings')
+
+    if (record.size === 0) {
+      console.log('No readings to upload. Aborting.')
+      process.exit()
+    }
+
     return uploader.upload(record, false, false)
   })
   .then(() => {

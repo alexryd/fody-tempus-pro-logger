@@ -15,14 +15,14 @@
   "dependencies": {
     "m2x": "^4.3.0",
     "nconf": "^0.10.0",
-    "noble": "^1.8.1",
+    "noble": "^1.9.1",
     "node-cron": "^1.2.1",
     "sqlite3": "^3.1.13"
   },
   "devDependencies": {
     "command-line-args": "^4.0.7",
     "command-line-commands": "^2.0.1",
-    "moment": "^2.18.1",
+    "moment": "^2.21.0",
     "prompt": "^1.0.0"
   }
 }

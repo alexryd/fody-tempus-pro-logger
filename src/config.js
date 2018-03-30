@@ -21,7 +21,7 @@ const DEFAULTS = {
   },
 
   db: {
-    path: path.join(__dirname, '..', 'data.db'),
+    path: path.join(path.dirname(__filename), '../data.db'),
   },
 
   m2x: {
@@ -34,7 +34,7 @@ class Config {
   constructor() {
     nconf.argv()
       .env()
-      .file({ file: path.join(__dirname, '..', 'config.json') })
+      .file(nconf.get('config') || path.join(path.dirname(__filename), '../config.json'))
       .defaults(DEFAULTS)
   }
 

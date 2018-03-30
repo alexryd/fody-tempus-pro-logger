@@ -16,7 +16,7 @@ const NOTIFY_CHARACTERISTIC_UUID = 'fff4'
 
 const getNormalizedAddresses = () => {
   const addresses = config.get('sensor:addresses')
-  return addresses && addresses.map(
+  return addresses && addresses.length > 0 && addresses.map(
     address => address.toLowerCase().replace(/:/g, '')
   )
 }

@@ -2,7 +2,7 @@ const config = require('./config')
 const M2X = require('m2x')
 
 class M2XWrapper {
-  constructor(apiKey, deviceId) {
+  constructor() {
     this.m2x = new M2X(config.get('m2x:apiKey'))
     this.deviceId = config.get('m2x:deviceId')
   }

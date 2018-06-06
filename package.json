@@ -9,6 +9,9 @@
     "url": "https://github.com/alexryd/fody-tempus-pro-logger"
   },
   "bin": "./bin/fody-tempus-pro-logger",
+  "scripts": {
+    "test": "mocha"
+  },
   "keywords": [
     "fody"
   ],
@@ -23,7 +26,9 @@
   "devDependencies": {
     "command-line-args": "^4.0.7",
     "command-line-commands": "^2.0.1",
+    "mocha": "^5.2.0",
     "moment": "^2.21.0",
-    "prompt": "^1.0.0"
+    "prompt": "^1.0.0",
+    "should": "^13.2.1"
   }
 }

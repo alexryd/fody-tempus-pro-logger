@@ -65,6 +65,9 @@ class WeatherStation extends EventEmitter {
         }
 
         const scanStopHandler = () => {
+          noble.removeListener('discover', _discoverHandler)
+          noble.removeListener('scanStop', scanStopHandler)
+          noble.removeListener('stateChange', stateChangeHandler)
           resolve(stations)
         }
 
@@ -120,6 +123,9 @@ class WeatherStation extends EventEmitter {
         }
 
         const scanStopHandler = () => {
+          noble.removeListener('discover', discoverHandler)
+          noble.removeListener('scanStop', scanStopHandler)
+          noble.removeListener('stateChange', stateChangeHandler)
           resolve()
         }
 

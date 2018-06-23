@@ -1,4 +1,3 @@
-const config = require('./config')
 const EventEmitter = require('events')
 const noble = require('noble')
 const Reading = require('./reading')

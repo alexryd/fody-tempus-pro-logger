@@ -1,4 +1,3 @@
-const colors = require('colors/safe')
 const config = require('./config')
 const EventEmitter = require('events')
 const noble = require('noble')
@@ -44,7 +43,7 @@ class WeatherStation extends EventEmitter {
     })
   }
 
-  static scan(discoverHandler, addresses) {
+  static scan(discoverHandler, addresses = null) {
     return WeatherStation.powerOn().then(() => {
       return new Promise((resolve, reject) => {
         const stations = []
@@ -94,7 +93,7 @@ class WeatherStation extends EventEmitter {
     })
   }
 
-  static scanForReadings(readingHandler, addresses) {
+  static scanForReadings(readingHandler, addresses = null) {
     return WeatherStation.powerOn().then(() => {
       return new Promise((resolve, reject) => {
         const discoverHandler = peripheral => {
@@ -163,7 +162,7 @@ class WeatherStation extends EventEmitter {
   static getRecord(includedReadings, readTimeout = 10000, addresses = null) {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        console.log(colors.red('Timed out while listening for sensor readings'))
+        console.log('Timed out while listening for sensor readings')
         WeatherStation.stopScan()
       }, readTimeout)
 

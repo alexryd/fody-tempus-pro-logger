@@ -14,8 +14,7 @@ const SETTINGS_NOTIFY_CHARACTERISTIC_UUID = 'fff2'
 const WRITE_CHARACTERISTIC_UUID = 'fff3'
 const NOTIFY_CHARACTERISTIC_UUID = 'fff4'
 
-const getNormalizedAddresses = () => {
-  const addresses = config.get('sensor:addresses')
+const getNormalizedAddresses = addresses => {
   return addresses && addresses.length > 0 && addresses.map(
     address => address.toLowerCase().replace(/:/g, '')
   )
@@ -161,15 +160,14 @@ class WeatherStation extends EventEmitter {
     })
   }
 
-  static getRecord() {
+  static getRecord(includedReadings, readTimeout = 10000, addresses = null) {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         console.log(colors.red('Timed out while listening for sensor readings'))
         WeatherStation.stopScan()
-      }, config.get('sensor:readTimeout'))
+      }, readTimeout)
 
       const record = new Record()
-      const includedReadings = config.get('sensor:readings')
 
       const readingHandler = reading => {
         if (includedReadings.indexOf(reading.name) !== -1) {
@@ -182,7 +180,10 @@ class WeatherStation extends EventEmitter {
         }
       }
 
-      WeatherStation.scanForReadings(readingHandler, getNormalizedAddresses())
+      WeatherStation.scanForReadings(
+        readingHandler,
+        getNormalizedAddresses(addresses)
+      )
         .then(() => {
           clearTimeout(timeout)
           resolve(record)

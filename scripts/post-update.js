@@ -1,12 +1,17 @@
 #!/usr/bin/env node
 
 const colors = require('colors/safe')
+const config = require('../src/config');
 const uploader = require('../src/uploader')
 const WeatherStation = require('../src/weather-station')
 
 console.log(colors.gray('Scanning for readings...'))
 
-WeatherStation.getRecord()
+WeatherStation.getRecord(
+  config.get('sensor:readings'),
+  config.get('sensor:readTimeout'),
+  config.get('sensor:addresses')
+)
   .then(record => {
     console.log('Found', colors.green(record.size), 'sensor readings')
 

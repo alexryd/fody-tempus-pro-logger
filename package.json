@@ -10,7 +10,7 @@
   },
   "bin": "./bin/fody-tempus-pro-logger",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha --exit"
   },
   "keywords": [
     "fody"

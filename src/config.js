@@ -24,10 +24,15 @@ const DEFAULTS = {
     path: path.join(path.dirname(__filename), '../data.db'),
   },
 
-  m2x: {
-    apiKey: '',
-    deviceId: '',
-  }
+  influxdb: {
+    database: '',
+    host: 'localhost',
+    port: 8086,
+    protocol: 'http',
+    username: '',
+    password: '',
+    tags: null,
+  },
 }
 
 class Config {
@@ -40,6 +45,10 @@ class Config {
 
   get(key) {
     return nconf.get(key)
+  }
+
+  set(key, value) {
+    nconf.set(key, value)
   }
 }
 

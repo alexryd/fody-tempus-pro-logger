@@ -17,7 +17,7 @@
   ],
   "dependencies": {
     "colors": "^1.2.1",
-    "m2x": "^4.3.0",
+    "influx": "^5.0.7",
     "nconf": "^0.10.0",
     "noble": "^1.9.1",
     "node-cron": "^1.2.1",

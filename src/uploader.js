@@ -1,105 +1,93 @@
-const colors = require('colors/safe')
-const DB = require('./db')
-const m2x = require('./m2x')
+const config = require('./config')
+const Influx = require('influx')
+
+const RECORDS_BREAK_POINT = 100
 
 class Uploader {
-  upload(record, uploadPending = true, storeOnError = true) {
-    if (!uploadPending && !storeOnError) {
-      const values = {}
-      this._appendRecord(values, record)
-      return m2x.postUpdates({ values })
-    }
-
-    const db = new DB()
-
-    return db.open()
-      .then(() => {
-        if (uploadPending) {
-          return db.retrieveAllRecords()
-        } else {
-          return []
-        }
-      })
-      .then(pendingRecords => {
-        if (pendingRecords.length > 0) {
-          console.log('Including', colors.blue(pendingRecords.length), 'stored record(s)')
-        }
-
-        const values = {}
-        for (const r of pendingRecords) {
-          this._appendRow(values, r)
-        }
-        this._appendRecord(values, record)
-
-        return this._postValues(values, db, record)
-      })
-      .then(() => {
-        return db.close()
-      })
-      .catch(error => {
-        return db.close().then(() => {
-          return Promise.reject(error)
-        })
-      })
+  constructor() {
+    this._influx = new Influx.InfluxDB({
+      database: config.get('influxdb:database'),
+      host: config.get('influxdb:host'),
+      port: config.get('influxdb:port'),
+      username: config.get('influxdb:username'),
+      password: config.get('influxdb:password'),
+    })
   }
 
-  _appendRecord(values, record) {
+  async uploadRecord(record) {
+    await this._influx.writePoints(this._recordToPoints(record))
+  }
+
+  async uploadStoredRecords(db) {
+    const globalTags = config.get('influxdb:tags')
+    let records = await db.retrieveRecords(RECORDS_BREAK_POINT)
+
+    while (records.length > 0) {
+      await this._influx.writePoints(this._storedRecordsToPoints(records))
+      await db.deleteRecords(records)
+      records = await db.retrieveRecords(RECORDS_BREAK_POINT)
+    }
+  }
+
+  _recordToPoints(record) {
+    const points = []
+    const globalTags = config.get('influxdb:tags')
+
     for (const [name, reading] of record) {
       if (reading.value === null) {
         continue
       }
 
-      const r = {
-        timestamp: record.timestamp.toISOString(),
-        value: reading.value,
+      const p = {
+        timestamp: record.timestamp,
+        measurement: record.type,
+        tags: { sensor: record.sensor },
+        fields: { value: reading.value },
       }
 
-      if (!values.hasOwnProperty(name)) {
-        values[name] = [r]
-      } else {
-        values[name].push(r)
+      if (globalTags) {
+        Object.assign(p.tags, globalTags)
       }
+
+      points.push(p)
     }
+
+    return points
   }
 
-  _appendRow(values, row) {
-    const timestamp = new Date(row.timestamp * 1000).toISOString()
+  _storedRecordsToPoints(records) {
+    const points = []
+    const globalTags = config.get('influxdb:tags')
 
-    for (const column in row) {
-      if (column === 'id' || column === 'timestamp' || row[column] === null) {
-        continue
-      }
+    for (const r of records) {
+      const timestamp = new Date(r.timestamp * 1000)
 
-      const r = {
-        timestamp,
-        value: row[column],
-      }
+      for (const column in r) {
+        if (column === 'id' || column === 'timestamp' || r[column] === null) {
+          continue
+        }
 
-      if (!values.hasOwnProperty(column)) {
-        values[column] = [r]
-      } else {
-        values[column].push(r)
+        const parts = column.split(/\-(.+)/)
+        const sensor = parts[0]
+        const type = parts[1]
+
+        const p = {
+          timestamp,
+          measurement: type,
+          tags: { sensor },
+          fields: { value: r[column] },
+        }
+
+        if (globalTags) {
+          Object.assign(p.tags, globalTags)
+        }
+
+        points.push(p)
       }
     }
-  }
 
-  _postValues(values, db, record) {
-    return new Promise((resolve, reject) => {
-      m2x.postUpdates({ values })
-        .then(() => {
-          return db.deleteAllRecords()
-        })
-        .then(resolve)
-        .catch(error => {
-          db.storeRecord(record)
-            .then(() => {
-              console.log('Upload failed. Record stored in database.')
-              reject(error)
-            })
-            .catch(reject)
-        })
-    })
+    return points
   }
 }
 
-module.exports = new Uploader()
+module.exports = Uploader

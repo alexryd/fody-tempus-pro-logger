@@ -104,15 +104,43 @@ class DB {
     })
   }
 
-  retrieveAllRecords() {
+  retrieveRecords(limit = null) {
     return new Promise((resolve, reject) => {
-      const sql = 'SELECT * FROM records ORDER BY timestamp ASC;'
+      const sql = ['SELECT * FROM records ORDER BY timestamp ASC']
 
-      this.db.all(sql, (error, rows) => {
+      if (limit) {
+        sql.push(' LIMIT ')
+        sql.push(limit)
+      }
+
+      sql.push(';')
+
+      this.db.all(sql.join(''), (error, rows) => {
         if (error) {
           reject(error)
         } else {
           resolve(rows)
+        }
+      })
+    })
+  }
+
+  deleteRecords(records) {
+    return new Promise((resolve, reject) => {
+      const sql = ['DELETE FROM records WHERE id IN (']
+
+      for (const r of records) {
+        sql.push(r.id)
+        sql.push(',')
+      }
+
+      sql.push(');')
+
+      this.db.run(sql.join(''), error => {
+        if (error) {
+          reject(error)
+        } else {
+          resolve()
         }
       })
     })

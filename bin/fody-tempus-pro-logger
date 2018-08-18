@@ -8,8 +8,8 @@ const path = require('path')
 const srcDir = path.join(path.dirname(fs.realpathSync(__filename)), '../src')
 
 const config = require(srcDir + '/config')
-const uploader = require(srcDir + '/uploader')
-const WeatherStation = require(srcDir + '/weather-station')
+const DB = require(srcDir + '/db')
+const run = require(srcDir + '/main')
 
 const schedule = config.get('schedule')
 
@@ -18,27 +18,17 @@ if (!cron.validate(schedule)) {
   process.exit(1)
 }
 
-cron.schedule(schedule, () => {
-  console.log(colors.gray('Scanning for readings...'))
+const db = new DB()
 
-  WeatherStation.getRecord(
-    config.get('sensor:readings'),
-    config.get('sensor:readTimeout'),
-    config.get('sensor:addresses')
-  )
-    .then(record => {
-      console.log('Found', colors.green(record.size), 'sensor readings')
+db.open()
+  .then(() => {
+    cron.schedule(schedule, () => {
+      run(db)
+    })
 
-      if (record.size > 0) {
-        return uploader.upload(record)
-      }
-    })
-    .then(() => {
-      console.log('Sensor readings uploaded')
-    })
-    .catch(error => {
-      console.error(colors.red('An error occurred:'), error)
-    })
-})
-
-console.log('Fody Tempus Pro logger started')
+    console.log('Fody Tempus Pro logger started')
+  })
+  .catch(error => {
+    console.error(colors.red('Failed to open the database:'), error)
+    process.exit(1)
+  })

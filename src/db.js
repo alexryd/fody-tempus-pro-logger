@@ -19,16 +19,16 @@ const RECORDS_TIMESTAMP_IDX_SQL = `CREATE INDEX IF NOT EXISTS idx_records_timest
 
 class DB {
   constructor() {
-    this.db = null
+    this._db = null
   }
 
   open() {
-    if (this.db !== null) {
+    if (this._db !== null) {
       throw new Error('Already connected')
     }
 
     return new Promise((resolve, reject) => {
-      this.db = new sqlite3.Database(config.get('db:path'), error => {
+      this._db = new sqlite3.Database(config.get('db:path'), error => {
         if (error) {
           reject(error)
         } else {
@@ -44,7 +44,7 @@ class DB {
       let i = 0
 
       const next = () => {
-        this.db.run(cmds[i], (error, row) => {
+        this._db.run(cmds[i], (error, row) => {
           if (error) {
             reject(error)
           } else if (++i < cmds.length) {
@@ -61,11 +61,11 @@ class DB {
 
   close() {
     return new Promise((resolve, reject) => {
-      this.db.close(error => {
+      this._db.close(error => {
         if (error) {
           reject(error)
         } else {
-          this.db = null
+          this._db = null
           resolve()
         }
       })
@@ -94,7 +94,7 @@ class DB {
         ');',
       ].join('')
 
-      this.db.run(sql, values, error => {
+      this._db.run(sql, values, error => {
         if (error) {
           reject(error)
         } else {
@@ -115,7 +115,7 @@ class DB {
 
       sql.push(';')
 
-      this.db.all(sql.join(''), (error, rows) => {
+      this._db.all(sql.join(''), (error, rows) => {
         if (error) {
           reject(error)
         } else {
@@ -136,7 +136,7 @@ class DB {
 
       sql.push(');')
 
-      this.db.run(sql.join(''), error => {
+      this._db.run(sql.join(''), error => {
         if (error) {
           reject(error)
         } else {
@@ -148,7 +148,7 @@ class DB {
 
   deleteAllRecords() {
     return new Promise((resolve, reject) => {
-      this.db.run('DELETE FROM records;', error => {
+      this._db.run('DELETE FROM records;', error => {
         if (error) {
           reject(error)
         } else {

@@ -41,8 +41,8 @@ class Uploader {
 
       const p = {
         timestamp: record.timestamp,
-        measurement: record.type,
-        tags: { sensor: record.sensor },
+        measurement: reading.type,
+        tags: { sensor: reading.sensor },
         fields: { value: reading.value },
       }
 

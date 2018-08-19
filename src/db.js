@@ -126,14 +126,19 @@ class DB {
   }
 
   deleteRecords(records) {
+    if (!records || records.length === 0) {
+      throw new Error('No records specified')
+    }
+
     return new Promise((resolve, reject) => {
       const sql = ['DELETE FROM records WHERE id IN (']
+      const ids = []
 
       for (const r of records) {
-        sql.push(r.id)
-        sql.push(',')
+        ids.push(r.id)
       }
 
+      sql.push(ids.join(','))
       sql.push(');')
 
       this._db.run(sql.join(''), error => {

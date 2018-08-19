@@ -9,6 +9,7 @@ class Uploader {
       database: config.get('influxdb:database'),
       host: config.get('influxdb:host'),
       port: config.get('influxdb:port'),
+      protocol: config.get('influxdb:protocol'),
       username: config.get('influxdb:username'),
       password: config.get('influxdb:password'),
     })

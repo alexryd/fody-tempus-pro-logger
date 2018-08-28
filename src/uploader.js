@@ -20,7 +20,6 @@ class Uploader {
   }
 
   async uploadStoredRecords(db) {
-    const globalTags = config.get('influxdb:tags')
     let records = await db.retrieveRecords(RECORDS_BREAK_POINT)
 
     while (records.length > 0) {

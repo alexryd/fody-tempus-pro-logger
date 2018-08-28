@@ -51,10 +51,6 @@ class Config {
   set(key, value) {
     nconf.set(key, value)
   }
-
-  default(key) {
-    return DEFAULTS[key]
-  }
 }
 
 module.exports = new Config()

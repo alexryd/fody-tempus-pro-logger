@@ -7,6 +7,7 @@ const sinon = require('sinon')
 const sqlite3 = require('sqlite3')
 
 describe('DB', function() {
+  const dbPath = config.get('db:path')
   let db = null
 
   const addRecords = function() {
@@ -51,7 +52,7 @@ describe('DB', function() {
   })
 
   afterEach(function() {
-    config.set('db:path', config.default('db:path'))
+    config.set('db:path', dbPath)
     db = null
   })
 

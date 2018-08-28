@@ -9,6 +9,7 @@ const Uploader = require('../src/uploader')
 const WeatherStation = require('../src/weather-station')
 
 describe('run()', function() {
+  const dbPath = config.get('db:path')
   let db = null
   let record = null
   let getRecord = null
@@ -35,7 +36,7 @@ describe('run()', function() {
 
   afterEach(function() {
     sinon.restore()
-    config.set('db:path', config.default('db:path'))
+    config.set('db:path', dbPath)
   })
 
   it('should not upload when no record is returned', async function() {

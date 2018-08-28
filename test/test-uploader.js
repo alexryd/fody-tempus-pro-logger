@@ -10,6 +10,7 @@ const Uploader = require('../src/uploader')
 describe('uploader', function() {
   let uploader = null
   let writePoints = null
+  const influxDBTags = config.get('influxdb:tags')
 
   beforeEach(function() {
     sinon.stub(Influx, 'InfluxDB')
@@ -23,7 +24,7 @@ describe('uploader', function() {
   afterEach(function() {
     sinon.restore()
 
-    config.set('influxdb:tags', config.default('influxdb:tags'))
+    config.set('influxdb:tags', influxDBTags)
   })
 
   describe('#_recordToPoints()', function() {
@@ -190,6 +191,7 @@ describe('uploader', function() {
   })
 
   describe('#uploadStoredRecords()', function() {
+    const dbPath = config.get('db:path')
     let db = null
 
     beforeEach(function() {
@@ -198,7 +200,7 @@ describe('uploader', function() {
     })
 
     afterEach(function() {
-      config.set('db:path', config.default('db:path'))
+      config.set('db:path', dbPath)
       db = null
     })
 
@@ -237,6 +239,7 @@ describe('uploader', function() {
     })
 
     it('should correctly paginate writes', async function() {
+      const maxPointsPerWrite = config.get('influxdb:maxPointsPerWrite')
       config.set('influxdb:maxPointsPerWrite', 2)
 
       await db.open()
@@ -262,10 +265,7 @@ describe('uploader', function() {
       const recordsAfter = await db.retrieveRecords()
       recordsAfter.length.should.equal(0)
 
-      config.set(
-        'influxdb:maxPointsPerWrite',
-        config.default('influxdb:maxPointsPerWrite')
-      )
+      config.set('influxdb:maxPointsPerWrite', maxPointsPerWrite)
     })
   })
 })

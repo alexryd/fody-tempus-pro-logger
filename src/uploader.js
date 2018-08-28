@@ -1,8 +1,6 @@
 const config = require('./config')
 const Influx = require('influx')
 
-const RECORDS_BREAK_POINT = 100
-
 class Uploader {
   constructor() {
     this._influx = new Influx.InfluxDB({
@@ -20,12 +18,13 @@ class Uploader {
   }
 
   async uploadStoredRecords(db) {
-    let records = await db.retrieveRecords(RECORDS_BREAK_POINT)
+    const maxPointsPerWrite = config.get('influxdb:maxPointsPerWrite')
+    let records = await db.retrieveRecords(maxPointsPerWrite)
 
     while (records.length > 0) {
       await this._influx.writePoints(this._storedRecordsToPoints(records))
       await db.deleteRecords(records)
-      records = await db.retrieveRecords(RECORDS_BREAK_POINT)
+      records = await db.retrieveRecords(maxPointsPerWrite)
     }
   }
 

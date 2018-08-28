@@ -32,6 +32,7 @@ const DEFAULTS = {
     username: '',
     password: '',
     tags: null,
+    maxPointsPerWrite: 100,
   },
 }
 

@@ -51,6 +51,7 @@ describe('DB', function() {
   })
 
   afterEach(function() {
+    config.set('db:path', config.default('db:path'))
     db = null
   })
 
